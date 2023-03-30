@@ -6,6 +6,8 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    #region Variables
+
     [Header("Movement")]
     public float moveSpeed;
     private float desiredSpeed;
@@ -14,7 +16,7 @@ public class PlayerMovement : MonoBehaviour
     //Movement lerp
     private float elapsedTime;
     public float accelTime;
-    public float longAccelTime;
+    public float decelTime;
     public AnimationCurve accelRate;
     private bool startSet = false;
     private float startSpeed;
@@ -24,6 +26,8 @@ public class PlayerMovement : MonoBehaviour
     private float startGrav;
     public float maxGravScale;
     public float gravIncreaseSpeed;
+    public Transform groundCheck;
+    public LayerMask groundLayer;
 
     // Input
     [Header("Input")]
@@ -31,7 +35,9 @@ public class PlayerMovement : MonoBehaviour
     public KeyCode jumpInput;
 
     private Rigidbody2D rb;
-   
+
+    #endregion
+
 
     private void Start()
     {
@@ -50,8 +56,6 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         Jump();
-
-        Debug.Log(OnGround());
 
         if (rb.velocity.y < 0)
         {
@@ -84,9 +88,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Jump()
     {
-        if (Input.GetKeyDown(jumpInput))
+        if (Input.GetButtonDown("Jump") && OnGround())
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-        else if (Input.GetKeyUp(jumpInput))
+        else if (Input.GetButtonUp("Jump") && OnGround())
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
     }
 
@@ -97,9 +101,9 @@ public class PlayerMovement : MonoBehaviour
         rb.gravityScale = newGrav;
     }
 
-    bool OnGround()
+    public bool OnGround()
     {
-        return Physics2D.Raycast(transform.position, -Vector2.up, 1.5f);
+        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
     }
 
     #endregion
@@ -124,21 +128,18 @@ public class PlayerMovement : MonoBehaviour
             float lerp = elapsedTime / accelTime;
 
             targetSpeed = Mathf.Lerp(targetSpeed, desiredSpeed, accelRate.Evaluate(lerp));
-            rb.velocity = new Vector2(targetSpeed, rb.velocity.y) * horizontalInput;
+            rb.velocity = new Vector2(horizontalInput * targetSpeed, rb.velocity.y);
         }
         else
         {
             elapsedTime = 0;
             startSet = false;
         }
-
-        
-
     }
 
     private void Flip()
     {
-        if (isFacingRight && horizontalInput < 0f || !isFacingRight && horizontalInput > 0f)
+        if (isFacingRight && rb.velocity.x < 0f || !isFacingRight && rb.velocity.x > 0f)
         {
             isFacingRight = !isFacingRight;
             Vector3 localScale = transform.localScale;
@@ -148,15 +149,5 @@ public class PlayerMovement : MonoBehaviour
     }
 
     #endregion
-
-    #region Gizmos
-
-    void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Vector2 dir = Vector2.up;
-        Gizmos.DrawRay(transform.position, dir);
-    }
-
-    #endregion
+ 
 }
