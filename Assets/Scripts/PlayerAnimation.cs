@@ -35,6 +35,8 @@ public class PlayerAnimation : MonoBehaviour
         if (Input.GetButtonDown("Jump") && playerMovement.OnGround())
             anim.SetTrigger("Jumped");
 
+        anim.SetBool("Wall Sliding", playerMovement.wallSliding);
+
 
 
     }
