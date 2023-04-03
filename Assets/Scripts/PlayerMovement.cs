@@ -12,7 +12,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement")]
     public float moveSpeed;
     private float desiredSpeed;
-    private bool isFacingRight = true;
+    public bool isFacingRight = true;
 
     //Movement lerp
     private float elapsedTime;
@@ -110,7 +110,7 @@ public class PlayerMovement : MonoBehaviour
             
 
         if (!wallJumping)
-            Flip();
+            //Flip();
 
 
         if (rb.velocity.y != 0 && OnWall() && !wallSliding)
@@ -168,7 +168,6 @@ public class PlayerMovement : MonoBehaviour
         // Accelerate
         if (rb.velocity.x < desiredSpeed && wallSliding == false)
         {
-            Debug.Log("Accelerate");
             if (!accelStartSet)
             {
                 startSpeed = rb.velocity.x;
@@ -189,7 +188,6 @@ public class PlayerMovement : MonoBehaviour
         // Decelerate
         else if (rb.velocity.x > desiredSpeed && wallSliding == false)
         {
-            Debug.Log("Decelerate");
             if (!decelStartSet)
             {
                 startSpeed = rb.velocity.x;
