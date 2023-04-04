@@ -11,6 +11,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Movement")]
     public float moveSpeed;
+    public float airSpeed;
     private float desiredSpeed;
     public bool isFacingRight = true;
 
@@ -54,10 +55,13 @@ public class PlayerMovement : MonoBehaviour
     public float dashTime;
     public float dashCooldown;  
     private bool canDash;
-    private bool dashing;
+    public bool dashing;
 
     private float horizontalInput;
-    
+
+    [Header("Shotgun Launch")]
+    public Shotgun shotgun;
+
 
     private Rigidbody2D rb;
 
@@ -77,7 +81,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!wallJumping)
+        if (!wallJumping && !shotgun.shotgunLaunchJumping)
             CalculateAcceleration();
 
         if (wallSliding)
@@ -127,11 +131,24 @@ public class PlayerMovement : MonoBehaviour
         // Get input
         horizontalInput = Input.GetAxis("Horizontal");
 
-        // Set desired speed
-        if (horizontalInput == 0)
-            desiredSpeed = 0;
+        if (wallJumping || shotgun.shotgunLaunchJumping)
+        {
+            Vector3 pos = transform.position;
+            pos.x += horizontalInput * airSpeed * Time.deltaTime;
+            transform.position = pos;
+        }
         else
-            desiredSpeed = moveSpeed;
+        {
+            // Set desired speed
+            if (horizontalInput == 0)
+                desiredSpeed = 0;
+            else
+                desiredSpeed = moveSpeed;
+        }
+
+        if (shotgun.shotgunLaunchJumping && rb.velocity.y < 0 && rb.velocity.x == 0)
+            shotgun.shotgunLaunchJumping = false;
+        
 
     }
 
@@ -154,11 +171,6 @@ public class PlayerMovement : MonoBehaviour
         rb.gravityScale = newGrav;
     }
 
-    public bool OnGround()
-    {
-        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
-    }
-
     #endregion
 
     #region Movement
@@ -166,7 +178,7 @@ public class PlayerMovement : MonoBehaviour
     private void CalculateAcceleration()
     {
         // Accelerate
-        if (rb.velocity.x < desiredSpeed && wallSliding == false)
+        if ((rb.velocity.x < desiredSpeed || rb.velocity.x > -desiredSpeed) && wallSliding == false)
         {
             if (!accelStartSet)
             {
@@ -186,7 +198,7 @@ public class PlayerMovement : MonoBehaviour
             rb.velocity = new Vector2(horizontalInput * targetSpeed, rb.velocity.y);
         }
         // Decelerate
-        else if (rb.velocity.x > desiredSpeed && wallSliding == false)
+        else if ((rb.velocity.x > desiredSpeed || rb.velocity.x < -desiredSpeed) && wallSliding == false)
         {
             if (!decelStartSet)
             {
@@ -210,17 +222,6 @@ public class PlayerMovement : MonoBehaviour
             elapsedTime = 0;
             accelStartSet = false;
             decelStartSet = false;
-        }
-    }
-
-    private void Flip()
-    {
-        if (isFacingRight && rb.velocity.x < 0f || !isFacingRight && rb.velocity.x > 0f)
-        {
-            isFacingRight = !isFacingRight;
-            Vector3 localScale = transform.localScale;
-            localScale.x *= -1f;
-            transform.localScale = localScale;
         }
     }
 
@@ -250,12 +251,6 @@ public class PlayerMovement : MonoBehaviour
 
         rb.velocity = new Vector2(rb.velocity.x, -slideSpeed);    
     }
-
-    public bool OnWall()
-    {
-        return Physics2D.OverlapCircle(wallCheck.position, 0.2f, groundLayer);
-    }
-
 
     #endregion
 
@@ -321,6 +316,26 @@ public class PlayerMovement : MonoBehaviour
 
     #endregion
 
+    #region Collision
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Ground") && shotgun.shotgunLaunchJumping)
+            shotgun.shotgunLaunchJumping = false;
+    }
+
+    public bool OnGround()
+    {
+        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+    }
+
+    public bool OnWall()
+    {
+        return Physics2D.OverlapCircle(wallCheck.position, 0.2f, groundLayer);
+    }
+
+    #endregion
+
     private void OnDrawGizmosSelected()
     {
         // Ground Check
@@ -332,3 +347,5 @@ public class PlayerMovement : MonoBehaviour
         Gizmos.DrawWireSphere(wallCheck.position, 0.2f);
     }
 }
+
+

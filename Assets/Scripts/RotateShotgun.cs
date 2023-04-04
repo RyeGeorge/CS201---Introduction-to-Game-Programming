@@ -40,8 +40,6 @@ public class RotateShotgun : MonoBehaviour
 
     void FlipPlayer()
     {
-        Debug.Log("Flip");
-
         playerMovement.isFacingRight = !playerMovement.isFacingRight;
         Vector3 localScale = player.localScale;
         localScale.x *= -1f;

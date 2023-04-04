@@ -9,6 +9,13 @@ public class Shotgun : MonoBehaviour
     private PlayerMovement playerMovement;
     private Vector3 shotgunDir;
 
+    [Header("Shotgun Launch")]
+    public float launchForce;
+    public float airLaunchForce;
+    public float shootCooldown;
+    public float shotgunLaunchTimer;
+    public bool shotgunLaunchJumping;
+
     private void Start()
     {
         player = GameObject.Find("Player").transform;
@@ -19,21 +26,35 @@ public class Shotgun : MonoBehaviour
     private void Update()
     {
         if (playerMovement.isFacingRight)
-            shotgunDir = transform.rotation * Vector3.right;
+            shotgunDir = transform.right;
         else
-            shotgunDir = transform.rotation * -Vector3.right;
+            shotgunDir = -transform.right;
 
-
-        if (Input.GetMouseButtonDown(0))
+        if (shotgunLaunchTimer >= shootCooldown)
         {
-            Shoot();
+            if (Input.GetMouseButtonDown(0))
+            {
+                Shoot();
+                shotgunLaunchTimer = 0;
+            }
         }
+        else
+            shotgunLaunchTimer += Time.deltaTime;
+        
     }
 
 
     private void Shoot()
     {
-        rb.AddForce(-shotgunDir * 10, ForceMode2D.Impulse);
+        if (shotgunLaunchJumping)
+        {
+            rb.velocity = new Vector2(-shotgunDir.x * airLaunchForce, -shotgunDir.y * airLaunchForce);
+        }
+        else
+        {
+            shotgunLaunchJumping = true;
+            rb.velocity = new Vector2(-shotgunDir.x * launchForce, -shotgunDir.y * launchForce);
+        }
     }
 
     private void OnDrawGizmosSelected()
