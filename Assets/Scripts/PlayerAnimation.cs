@@ -24,12 +24,12 @@ public class PlayerAnimation : MonoBehaviour
         else if (rb.velocity.x == 0)
             anim.SetBool("Running", false);
 
-        if (rb.velocity.y < 0)
+        if (rb.velocity.y < -0.1)
             anim.SetBool("Falling", true);
         else
             anim.SetBool("Falling", false);
 
-        if (rb.velocity.y < 0 && playerMovement.OnGround())
+        if (rb.velocity.y < 0.15 && playerMovement.OnGround())
             anim.SetTrigger("Landed");
 
         if (Input.GetButtonDown("Jump") && playerMovement.OnGround())

@@ -54,8 +54,10 @@ public class PlayerMovement : MonoBehaviour
     public float dashSpeed;
     public float dashTime;
     public float dashCooldown;  
+    private float dashCooldownTime;
     private bool canDash;
     public bool dashing;
+    public TrailRenderer trailRenderer;
 
     private float horizontalInput;
 
@@ -81,7 +83,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!wallJumping && !shotgun.shotgunLaunchJumping)
+        if (!wallJumping && !shotgun.shotgunLaunchJumping && !dashing)
             CalculateAcceleration();
 
         if (wallSliding)
@@ -90,24 +92,32 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (dashing)
+            return;
+
         Jump();
         WallJump();
 
-        if (Input.GetButtonDown("Dash") && dashing == false)
+        if (Input.GetButtonDown("Dash") && dashing == false && dashCooldownTime <= 0)
         {
             StartCoroutine(Dash());
+            dashCooldownTime = dashCooldown;
+        }
+        else if (dashCooldownTime >= 0)
+        {
+            dashCooldownTime -= Time.deltaTime;
         }
 
         if (OnGround() && wallJumping)
             wallJumping = false;
 
-        if (rb.velocity.y < 0 && !OnWall())
+        if (rb.velocity.y < 0 && !OnWall() && !dashing)
         {
             UpdateGravity();
         }
             
             
-        if (rb.velocity.y >= 0 && !OnWall())
+        if (rb.velocity.y >= 0 && !OnWall() && !dashing)
         {
             rb.gravityScale = startGrav;
         }
@@ -178,7 +188,7 @@ public class PlayerMovement : MonoBehaviour
     private void CalculateAcceleration()
     {
         // Accelerate
-        if ((rb.velocity.x < desiredSpeed || rb.velocity.x > -desiredSpeed) && wallSliding == false)
+        if (((rb.velocity.x < desiredSpeed && rb.velocity.x >= 0) || (rb.velocity.x > -desiredSpeed && rb.velocity.x <= 0)) && wallSliding == false)
         {
             if (!accelStartSet)
             {
@@ -198,7 +208,7 @@ public class PlayerMovement : MonoBehaviour
             rb.velocity = new Vector2(horizontalInput * targetSpeed, rb.velocity.y);
         }
         // Decelerate
-        else if ((rb.velocity.x > desiredSpeed || rb.velocity.x < -desiredSpeed) && wallSliding == false)
+        else if (((rb.velocity.x > desiredSpeed && rb.velocity.x > 0) || (rb.velocity.x < -desiredSpeed && rb.velocity.x < 0)) && wallSliding == false)
         {
             if (!decelStartSet)
             {
@@ -215,6 +225,7 @@ public class PlayerMovement : MonoBehaviour
             float lerp = elapsedTime / decelTime;
 
             targetSpeed = Mathf.Lerp(startSpeed, desiredSpeed, accelRate.Evaluate(lerp));
+
             rb.velocity = new Vector2(horizontalInput * targetSpeed, rb.velocity.y);
         }
         else
@@ -304,14 +315,15 @@ public class PlayerMovement : MonoBehaviour
         dashing = true;
         rb.gravityScale = 0;
 
+        trailRenderer.emitting = true;
         rb.velocity = new Vector2(transform.localScale.x * dashSpeed, rb.velocity.y);
+        Debug.Log(transform.localScale.x);
 
         yield return new WaitForSeconds(dashTime);
 
+        trailRenderer.emitting = false;
         rb.gravityScale = startGrav;
         dashing = false;
-
-        yield return new WaitForSeconds(dashCooldown);
     }
 
     #endregion
