@@ -9,11 +9,15 @@ public class Shotgun : MonoBehaviour
     private PlayerMovement playerMovement;
     private Vector3 shotgunDir;
 
+    [Header("Shooting")]
+    public float shootCooldown;
+    private float shotgunTimer;
+    public GameObject projectile;
+    public Transform projectileOrigin;
+
     [Header("Shotgun Launch")]
     public float launchForce;
     public float airLaunchForce;
-    public float shootCooldown;
-    public float shotgunLaunchTimer;
     public bool shotgunLaunchJumping;
 
     private void Start()
@@ -30,21 +34,31 @@ public class Shotgun : MonoBehaviour
         else
             shotgunDir = -transform.right;
 
-        if (shotgunLaunchTimer >= shootCooldown)
+        if (shotgunTimer >= shootCooldown)
         {
             if (Input.GetMouseButtonDown(0))
             {
                 Shoot();
-                shotgunLaunchTimer = 0;
+                shotgunTimer = 0;
+
+                if (!playerMovement.OnGround())
+                {
+                    ShotGunLaunch();
+                }
             }
         }
         else
-            shotgunLaunchTimer += Time.deltaTime;
+            shotgunTimer += Time.deltaTime;
         
     }
 
 
     private void Shoot()
+    {
+        Instantiate(projectile, projectileOrigin);
+    }
+
+    private void ShotGunLaunch()
     {
         if (shotgunLaunchJumping)
         {
