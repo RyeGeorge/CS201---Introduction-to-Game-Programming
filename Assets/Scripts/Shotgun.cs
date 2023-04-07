@@ -12,8 +12,10 @@ public class Shotgun : MonoBehaviour
     [Header("Shooting")]
     public float shootCooldown;
     private float shotgunTimer;
+    public float shotgunSpread;
     public GameObject projectile;
     public Transform projectileOrigin;
+    
 
     [Header("Shotgun Launch")]
     public float launchForce;
@@ -55,7 +57,15 @@ public class Shotgun : MonoBehaviour
 
     private void Shoot()
     {
-        Instantiate(projectile, projectileOrigin);
+        GameObject bullet1 = Instantiate(projectile, projectileOrigin);
+        bullet1.GetComponent<PlayerBulletProjectile>().bulletDirection = Vector3.right;
+            
+        GameObject bullet2 = Instantiate(projectile, projectileOrigin);
+        bullet2.GetComponent<PlayerBulletProjectile>().bulletDirection = Quaternion.AngleAxis(shotgunSpread, Vector3.forward) * Vector3.right;
+
+        GameObject bullet3 = Instantiate(projectile, projectileOrigin);
+        bullet3.GetComponent<PlayerBulletProjectile>().bulletDirection = Quaternion.AngleAxis(-shotgunSpread, Vector3.forward) * Vector3.right;
+
     }
 
     private void ShotGunLaunch()
@@ -74,6 +84,8 @@ public class Shotgun : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.green;
-        Gizmos.DrawRay(transform.position, shotgunDir);
+        Gizmos.DrawRay(projectileOrigin.position, shotgunDir);
+        Gizmos.DrawRay(projectileOrigin.position, Quaternion.AngleAxis(shotgunSpread, Vector3.forward) * shotgunDir);
+        Gizmos.DrawRay(projectileOrigin.position, Quaternion.AngleAxis(-shotgunSpread, Vector3.forward) * shotgunDir);
     }
 }

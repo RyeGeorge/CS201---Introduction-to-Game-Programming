@@ -7,6 +7,8 @@ public class Clam : MonoBehaviour
     Animator anim;
     PlayerHealth playerHealth;
 
+    public float health;
+    private float currentHealth;
     public float attackRange;
     public float attackCooldown;
     public Transform projectileOrigin;
@@ -15,6 +17,7 @@ public class Clam : MonoBehaviour
     private GameObject player;
 
     private bool shooting;
+    private bool canShoot = true;
 
     private void Start()
     {
@@ -27,8 +30,11 @@ public class Clam : MonoBehaviour
     {
         if (Vector2.Distance(this.transform.position, player.transform.position) < attackRange && shooting == false && !playerHealth.playerDead && transform.position.x > player.transform.position.x)
         {
-            shooting = true;
-            StartCoroutine(ShootProjectile());
+            if (canShoot)
+            {
+                shooting = true;
+                StartCoroutine(ShootProjectile());
+            }
         }
         else if (Vector2.Distance(this.transform.position, player.transform.position) > attackRange || transform.position.x < player.transform.position.x || playerHealth.playerDead)
         {
@@ -50,5 +56,35 @@ public class Clam : MonoBehaviour
     public void SpawnProjectile()
     {
         Instantiate(projectile, projectileOrigin);
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("Bullet"))
+        {
+            PlayerBulletProjectile playerBulletProjectile = collision.gameObject.GetComponent<PlayerBulletProjectile>();
+            if (playerBulletProjectile != null)
+            {
+                TakeDamage(playerBulletProjectile.damage);
+            }
+        }
+    }
+
+    void TakeDamage(float damage)
+    {
+        currentHealth -= damage;
+        anim.SetTrigger("Hit");
+
+        if (currentHealth <=0) 
+        {
+            currentHealth = 0;
+
+            KillClam();
+        }
+    }
+
+    void KillClam()
+    {
+        canShoot = false;
     }
 }

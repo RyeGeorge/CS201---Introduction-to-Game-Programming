@@ -6,8 +6,9 @@ using UnityEngine;
 public class PlayerBulletProjectile : MonoBehaviour
 {
     public float speed;
+    public float damage;
     private PlayerMovement playerMovement;
-    private Vector3 bulletDirection;
+    public Vector3 bulletDirection;
 
     private void Start()
     {
@@ -15,9 +16,9 @@ public class PlayerBulletProjectile : MonoBehaviour
         playerMovement = GameObject.Find("Player").GetComponent<PlayerMovement>();
 
         if (playerMovement.isFacingRight)
-            bulletDirection = Vector3.right;
+            bulletDirection *= 1;
         else
-            bulletDirection = Vector3.left;
+            bulletDirection *= -1;
     }
 
     private void Update()
@@ -27,10 +28,7 @@ public class PlayerBulletProjectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!collision.gameObject.CompareTag("Player"))
-        {
-            Destroy(gameObject);
-        }
+        Destroy(gameObject);
     }
 
 }
