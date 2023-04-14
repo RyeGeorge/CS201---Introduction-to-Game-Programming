@@ -30,7 +30,7 @@ public class EnemyAI : MonoBehaviour
 
 
     [Header("Healthbar")]
-    public Canvas canvas;
+    public Vector2 healthbarOffset;
     public Slider healthbar;
     public float deactivateTime;
     private bool healthBarActive;
@@ -46,15 +46,24 @@ public class EnemyAI : MonoBehaviour
         StartCoroutine(MoveRight());
 
         currentHealth = health;
+        healthbar.gameObject.SetActive(false);
+        healthbar.maxValue = health;
+        healthbar.value = health;
     }
 
     private void Update()
     {
+        healthbar.value = currentHealth;
+
         if (!dead)
         {
+           
             if (Vector2.Distance(this.transform.position, player.transform.position) <= attackRange && !attackRunning)
             {
                 StopAllCoroutines();
+                attackRunning = false;
+                moveRightRunning = false;
+                moveLeftRunning = false;
                 attacking = true;
 
                 StartCoroutine(Attack());
@@ -62,11 +71,8 @@ public class EnemyAI : MonoBehaviour
             }
             else if (Vector2.Distance(this.transform.position, player.transform.position) > attackRange && attackRunning)
             {
-                attacking = false;
-                attackRunning = false;
-                moveRightRunning = false;
-                moveLeftRunning = false;
                 StopCoroutine(Attack());
+                attacking = false;
 
                 if (movingRight && moveRightRunning == false)
                     StartCoroutine(MoveRight());
@@ -103,6 +109,10 @@ public class EnemyAI : MonoBehaviour
         Vector3 localScale = transform.localScale;
         localScale.x *= -1;
         transform.localScale = localScale;
+
+        Vector3 healthbarLocalScale = healthbar.transform.localScale;
+        healthbarLocalScale.x *= -1;
+        healthbar.transform.localScale = healthbarLocalScale;
     }
 
     IEnumerator Attack()
@@ -110,6 +120,9 @@ public class EnemyAI : MonoBehaviour
         attackRunning = true;
         while (attacking)
         {
+            yield return new WaitForEndOfFrame();
+
+            anim.SetBool("Moving", false);
             anim.SetTrigger("Attack");
             yield return new WaitForSeconds(attackDelay);
         }
@@ -173,6 +186,7 @@ public class EnemyAI : MonoBehaviour
         {
             anim.SetTrigger("Dead Landed");
         }
+
     }
 
     void DamagePlayer(PlayerHealth playerHealth)
@@ -203,8 +217,7 @@ public class EnemyAI : MonoBehaviour
 
     void ActivateHealthBar()
     {
-        healthbar.enabled = true;
-        healthbar.transform.SetParent(canvas.transform);
+        healthbar.gameObject.SetActive(true);
 
         CancelInvoke();
         Invoke("DeactivateHealthBar", deactivateTime);
@@ -212,8 +225,10 @@ public class EnemyAI : MonoBehaviour
 
     void DeactivateHealthBar()
     {
-        healthbar.enabled = false;
+        healthbar.gameObject.SetActive(false);
     }
+
+
 
     void KillEnemy()
     {
@@ -221,6 +236,8 @@ public class EnemyAI : MonoBehaviour
         anim.SetTrigger("Dead");
         StopAllCoroutines();
         ApplyDeathKnockback();
+
+        Invoke("DeactivateHealthBar", 0.35f);
     }
 
     void ApplyDeathKnockback()
