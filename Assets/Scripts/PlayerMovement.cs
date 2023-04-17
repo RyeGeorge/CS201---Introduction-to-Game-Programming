@@ -37,7 +37,8 @@ public class PlayerMovement : MonoBehaviour
     public float maxSlideSpeed;
     public float slideAccelRate;
     private float startSlideSpeed;
-    public Transform wallCheck;
+    public Transform rightWallCheck;
+    public Transform leftWallCheck;
     public bool wallSliding;
     private bool wallSlideStarted = false;
     
@@ -45,7 +46,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Wall Jump")]
     public Vector2 wallJumpForce;
     public bool wallJumping;
-    private float wallJumpDirection;
+    private Vector2 wallJumpDirection;
     private float wallJumpTime = 0.2f;
     private float wallJumpCounter;
     private float wallJumpDuration = 0.4f;
@@ -127,7 +128,7 @@ public class PlayerMovement : MonoBehaviour
             //Flip();
 
 
-        if (rb.velocity.y != 0 && OnWall() && !wallSliding)
+        if (rb.velocity.y < 0 && OnWall() && !wallSliding)
             StartSlide();
             
 
@@ -272,7 +273,14 @@ public class PlayerMovement : MonoBehaviour
         if (wallSliding)
         {
             wallJumping = false;
-            wallJumpDirection = -transform.localScale.x;
+            if (Physics2D.OverlapCircle(rightWallCheck.position, 0.2f, groundLayer))
+            {
+                wallJumpDirection = Vector2.left;
+            }
+            else if (Physics2D.OverlapCircle(leftWallCheck.position, 0.2f, groundLayer))
+            {
+                wallJumpDirection = Vector2.right;
+            }
             wallJumpCounter = wallJumpTime;
 
             //CancelInvoke(nameof(StopWallJumping));
@@ -285,16 +293,9 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetButtonDown("Jump") && wallJumpCounter > 0f)
         {
             wallJumping = true;
-            rb.velocity = new Vector2(wallJumpDirection * wallJumpForce.x, wallJumpForce.y);
+            rb.velocity = wallJumpDirection * wallJumpForce;
             wallJumpCounter = 0;
 
-            if (transform.localScale.x != wallJumpDirection)
-            {
-                isFacingRight = !isFacingRight;
-                Vector3 localScale = transform.localScale;
-                localScale.x *= -1f;
-                transform.localScale = localScale;
-            }
 
             //Invoke(nameof(StopWallJumping), wallJumpDuration);
         }
@@ -343,7 +344,7 @@ public class PlayerMovement : MonoBehaviour
 
     public bool OnWall()
     {
-        return Physics2D.OverlapCircle(wallCheck.position, 0.2f, groundLayer);
+        return Physics2D.OverlapCircle(rightWallCheck.position, 0.2f, groundLayer) || Physics2D.OverlapCircle(leftWallCheck.position, 0.2f, groundLayer);
     }
 
     #endregion
@@ -356,7 +357,7 @@ public class PlayerMovement : MonoBehaviour
 
         // Wall Check
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(wallCheck.position, 0.2f);
+        Gizmos.DrawWireSphere(rightWallCheck.position, 0.2f);
     }
 }
 
