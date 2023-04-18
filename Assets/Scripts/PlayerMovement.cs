@@ -37,16 +37,17 @@ public class PlayerMovement : MonoBehaviour
     public float maxSlideSpeed;
     public float slideAccelRate;
     private float startSlideSpeed;
-    public Transform rightWallCheck;
-    public Transform leftWallCheck;
+    public Transform frontWallCheck;
+    public Transform backWallCheck;
     public bool wallSliding;
     private bool wallSlideStarted = false;
     
 
     [Header("Wall Jump")]
     public Vector2 wallJumpForce;
+    private Vector2 startWallJumpForce;
     public bool wallJumping;
-    private Vector2 wallJumpDirection;
+    private float wallJumpDirection;
     private float wallJumpTime = 0.2f;
     private float wallJumpCounter;
     private float wallJumpDuration = 0.4f;
@@ -78,6 +79,7 @@ public class PlayerMovement : MonoBehaviour
 
         startGrav = rb.gravityScale;
         startSlideSpeed = slideSpeed;
+        startWallJumpForce = wallJumpForce;
     }
 
     #region Update / Fixed Update
@@ -142,7 +144,7 @@ public class PlayerMovement : MonoBehaviour
         // Get input
         horizontalInput = Input.GetAxis("Horizontal");
 
-        if (wallJumping || shotgun.shotgunLaunchJumping)
+       if (shotgun.shotgunLaunchJumping)
         {
             Vector3 pos = transform.position;
             pos.x += horizontalInput * airSpeed * Time.deltaTime;
@@ -151,11 +153,13 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             // Set desired speed
-            if (horizontalInput == 0)
+            if (horizontalInput == 0 && rb.velocity.y == 0)
                 desiredSpeed = 0;
             else
                 desiredSpeed = moveSpeed;
         }
+
+        
 
         if (shotgun.shotgunLaunchJumping && rb.velocity.y < 0 && rb.velocity.x == 0)
             shotgun.shotgunLaunchJumping = false;
@@ -272,18 +276,24 @@ public class PlayerMovement : MonoBehaviour
     {
         if (wallSliding)
         {
+            wallJumpForce = startWallJumpForce;
             wallJumping = false;
-            if (Physics2D.OverlapCircle(rightWallCheck.position, 0.2f, groundLayer))
+            if (Physics2D.OverlapCircle(frontWallCheck.position, 0.2f, groundLayer))
             {
-                wallJumpDirection = Vector2.left;
+                wallJumpDirection = -transform.localScale.x;
             }
-            else if (Physics2D.OverlapCircle(leftWallCheck.position, 0.2f, groundLayer))
+            else if (Physics2D.OverlapCircle(backWallCheck.position, 0.2f, groundLayer))
             {
-                wallJumpDirection = Vector2.right;
+                wallJumpDirection = transform.localScale.x;
             }
+            
+            if (wallJumpDirection < 0) 
+            {
+                wallJumpForce.y *= -1;
+            }
+
             wallJumpCounter = wallJumpTime;
 
-            //CancelInvoke(nameof(StopWallJumping));
         }
         else
         {
@@ -292,12 +302,11 @@ public class PlayerMovement : MonoBehaviour
 
         if (Input.GetButtonDown("Jump") && wallJumpCounter > 0f)
         {
+            wallSliding = false;
             wallJumping = true;
             rb.velocity = wallJumpDirection * wallJumpForce;
             wallJumpCounter = 0;
 
-
-            //Invoke(nameof(StopWallJumping), wallJumpDuration);
         }
     }
 
@@ -344,7 +353,7 @@ public class PlayerMovement : MonoBehaviour
 
     public bool OnWall()
     {
-        return Physics2D.OverlapCircle(rightWallCheck.position, 0.2f, groundLayer) || Physics2D.OverlapCircle(leftWallCheck.position, 0.2f, groundLayer);
+        return Physics2D.OverlapCircle(frontWallCheck.position, 0.2f, groundLayer) || Physics2D.OverlapCircle(backWallCheck.position, 0.2f, groundLayer);
     }
 
     #endregion
@@ -357,7 +366,7 @@ public class PlayerMovement : MonoBehaviour
 
         // Wall Check
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(rightWallCheck.position, 0.2f);
+        Gizmos.DrawWireSphere(frontWallCheck.position, 0.2f);
     }
 }
 

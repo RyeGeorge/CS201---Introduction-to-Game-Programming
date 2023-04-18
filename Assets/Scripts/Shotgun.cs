@@ -43,7 +43,7 @@ public class Shotgun : MonoBehaviour
                 Shoot();
                 shotgunTimer = 0;
 
-                if (!playerMovement.OnGround())
+                if (!playerMovement.OnGround() && !playerMovement.wallSliding)
                 {
                     ShotGunLaunch();
                 }
@@ -57,6 +57,8 @@ public class Shotgun : MonoBehaviour
 
     private void Shoot()
     {
+        playerMovement.wallJumping = false;
+
         GameObject bullet1 = Instantiate(projectile, projectileOrigin);
         bullet1.GetComponent<PlayerBulletProjectile>().bulletDirection = Vector3.right;
             
