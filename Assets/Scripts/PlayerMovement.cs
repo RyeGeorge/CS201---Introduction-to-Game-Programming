@@ -51,6 +51,7 @@ public class PlayerMovement : MonoBehaviour
     private float wallJumpTime = 0.2f;
     private float wallJumpCounter;
     private float wallJumpDuration = 0.4f;
+    private bool canStopWallJump;
 
     [Header("Dash")]
     public float dashSpeed;
@@ -131,13 +132,25 @@ public class PlayerMovement : MonoBehaviour
 
 
         if (rb.velocity.y < 0 && OnWall() && !wallSliding)
-            StartSlide();
-            
+        {
+                StartSlide();
+        } 
+        
+        if (wallJumping && OnWall() && canStopWallJump)
+        {
+            wallJumping = false;
+        }
+
+        if (wallSliding && !OnWall())
+        {
+            StopSlide();
+        }
+
 
         if (OnGround())
             StopSlide();
 
-        if (wallSliding && !OnWall())
+        if (wallSliding && OnGround())
             StopSlide();
 
 
@@ -247,6 +260,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void StartSlide()
     {
+        wallJumping = false;
         wallSliding = true;
         rb.gravityScale = 0f;
     }
@@ -278,6 +292,7 @@ public class PlayerMovement : MonoBehaviour
         {
             wallJumpForce = startWallJumpForce;
             wallJumping = false;
+            canStopWallJump = false;
             if (Physics2D.OverlapCircle(frontWallCheck.position, 0.2f, groundLayer))
             {
                 wallJumpDirection = -transform.localScale.x;
@@ -302,17 +317,18 @@ public class PlayerMovement : MonoBehaviour
 
         if (Input.GetButtonDown("Jump") && wallJumpCounter > 0f)
         {
-            wallSliding = false;
+            StopSlide();
             wallJumping = true;
             rb.velocity = wallJumpDirection * wallJumpForce;
             wallJumpCounter = 0;
 
+            Invoke("StopWallJumping", 0.1f);
         }
     }
 
     private void StopWallJumping()
     {
-        wallJumping = false;
+        canStopWallJump = true;
     }
 
     #endregion
