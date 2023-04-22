@@ -192,6 +192,8 @@ public class EnemyAI : MonoBehaviour
         if (dead && collision.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
             anim.SetTrigger("Dead Landed");
+            Destroy(GetComponent<Collider2D>());
+            Destroy(GetComponent<Rigidbody2D>());
         }
 
     }

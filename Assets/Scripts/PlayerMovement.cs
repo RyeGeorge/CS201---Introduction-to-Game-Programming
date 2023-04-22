@@ -348,6 +348,7 @@ public class PlayerMovement : MonoBehaviour
             wallJumping = true;
             rb.velocity = wallJumpDirection * wallJumpForce;
             wallJumpCounter = 0;
+            sfxPlayer.PlayAudioClip(sfxPlayer.jump, audioSource);
 
             Invoke("StopWallJumping", 0.1f);
         }
