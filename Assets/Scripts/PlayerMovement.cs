@@ -9,11 +9,15 @@ public class PlayerMovement : MonoBehaviour
 {
     #region Variables
 
+    private SFXPlayer sfxPlayer;
+    private AudioSource audioSource;
+
     [Header("Movement")]
     public float moveSpeed;
     public float airSpeed;
     private float desiredSpeed;
     public bool isFacingRight = true;
+    public PhysicsMaterial2D slipMaterial;
 
     //Movement lerp
     private float elapsedTime;
@@ -81,6 +85,9 @@ public class PlayerMovement : MonoBehaviour
         startGrav = rb.gravityScale;
         startSlideSpeed = slideSpeed;
         startWallJumpForce = wallJumpForce;
+
+        sfxPlayer = GameObject.Find("SFXPlayer").GetComponent<SFXPlayer>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     #region Update / Fixed Update
@@ -98,6 +105,15 @@ public class PlayerMovement : MonoBehaviour
     {
         if (dashing)
             return;
+
+        if (OnWall())
+        {
+            rb.sharedMaterial = slipMaterial;
+        }
+        else
+        {
+            rb.sharedMaterial = null;
+        }
 
         Jump();
         WallJump();
@@ -167,7 +183,7 @@ public class PlayerMovement : MonoBehaviour
         {
             // Set desired speed
             if (horizontalInput == 0 && rb.velocity.y == 0)
-                desiredSpeed = 0;
+                rb.velocity = new Vector2(0, rb.velocity.y);
             else
                 desiredSpeed = moveSpeed;
         }
@@ -187,7 +203,11 @@ public class PlayerMovement : MonoBehaviour
     void Jump()
     {
         if (Input.GetButtonDown("Jump") && OnGround())
+        {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            sfxPlayer.PlayAudioClip(sfxPlayer.jump, audioSource);
+        }
+            
         else if (Input.GetButtonUp("Jump") && OnGround())
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
     }
@@ -242,7 +262,14 @@ public class PlayerMovement : MonoBehaviour
             elapsedTime += Time.deltaTime;
             float lerp = elapsedTime / decelTime;
 
-            targetSpeed = Mathf.Lerp(startSpeed, desiredSpeed, accelRate.Evaluate(lerp));
+            if (rb.velocity.x < 0)
+            {
+                targetSpeed = Mathf.Lerp(-1 * startSpeed, desiredSpeed, accelRate.Evaluate(lerp));
+            }
+            else if (rb.velocity.x > 0)
+            {
+                targetSpeed = Mathf.Lerp(1 * startSpeed, desiredSpeed, accelRate.Evaluate(lerp));
+            }
 
             rb.velocity = new Vector2(horizontalInput * targetSpeed, rb.velocity.y);
         }
@@ -342,8 +369,16 @@ public class PlayerMovement : MonoBehaviour
         rb.gravityScale = 0;
 
         trailRenderer.emitting = true;
-        rb.velocity = new Vector2(transform.localScale.x * dashSpeed, rb.velocity.y);
-        Debug.Log(transform.localScale.x);
+        if (rb.velocity.x < 0.01 && rb.velocity.x > -0.01)
+        {
+            rb.velocity = new Vector2(transform.localScale.x * dashSpeed, rb.velocity.y);
+        }
+        else
+        {
+            rb.velocity = new Vector2((Input.GetAxisRaw("Horizontal") * 4)* dashSpeed, rb.velocity.y);
+        }
+        sfxPlayer.PlayAudioClip(sfxPlayer.dash, audioSource);
+
 
         yield return new WaitForSeconds(dashTime);
 

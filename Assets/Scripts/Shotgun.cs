@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Shotgun : MonoBehaviour
 {
+    SFXPlayer sfxPlayer;
+    AudioSource audioSource;
+
     private Transform player;
     private Rigidbody2D rb;
     private PlayerMovement playerMovement;
@@ -27,6 +30,9 @@ public class Shotgun : MonoBehaviour
         player = GameObject.Find("Player").transform;
         playerMovement = player.GetComponent<PlayerMovement>();
         rb = player.GetComponent<Rigidbody2D>();
+
+        sfxPlayer = GameObject.Find("SFXPlayer").GetComponent<SFXPlayer>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
@@ -58,6 +64,7 @@ public class Shotgun : MonoBehaviour
     private void Shoot()
     {
         playerMovement.wallJumping = false;
+        sfxPlayer.PlayAudioClip(sfxPlayer.shootGun, audioSource);
 
         GameObject bullet1 = Instantiate(projectile, projectileOrigin);
         bullet1.GetComponent<PlayerBulletProjectile>().bulletDirection = Vector3.right;

@@ -9,6 +9,9 @@ public class EnemyAI : MonoBehaviour
     private GameObject player;
     private Animator anim;
 
+    private SFXPlayer sfxPlayer;
+    private AudioSource audioSource;
+
     [Header("Movement")]
     public float speed;
     public float moveRange;
@@ -49,6 +52,10 @@ public class EnemyAI : MonoBehaviour
         healthbar.gameObject.SetActive(false);
         healthbar.maxValue = health;
         healthbar.value = health;
+
+        sfxPlayer = GameObject.Find("SFXPlayer").GetComponent<SFXPlayer>();
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
     }
 
     private void Update()
@@ -205,6 +212,7 @@ public class EnemyAI : MonoBehaviour
 
             currentHealth -= damage;
             anim.SetTrigger("Hit");
+            sfxPlayer.PlayAudioClip(sfxPlayer.enemyHurt, audioSource);
 
             if (currentHealth <= 0)
             {

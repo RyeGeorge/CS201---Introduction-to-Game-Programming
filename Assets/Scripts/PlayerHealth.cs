@@ -9,9 +9,12 @@ public class PlayerHealth : MonoBehaviour
     private DamageFlash damageFlash;
     private PlayerMovement playerMovement;
 
+    private SFXPlayer sfxPlayer;
+    private AudioSource audioSource;
+
     [Header("Hit")]
     public float health;
-    private float currentHealth;
+    public float currentHealth;
     public float hitCooldown;
     private float hitTimer;
     public bool playerHit;
@@ -26,6 +29,7 @@ public class PlayerHealth : MonoBehaviour
 
     [Header("UI")]
     public Slider healthSlider;
+    private GameObject deathMenu;
 
     private void Start()
     {
@@ -36,6 +40,9 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = health;
 
         hitTimer = 0;
+
+        sfxPlayer = GameObject.Find("SFXPlayer").GetComponent<SFXPlayer>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
@@ -48,20 +55,24 @@ public class PlayerHealth : MonoBehaviour
 
     public void DecreaseHealth(float decreaseAmount)
     {
-        if (hitTimer <= 0)
+        if (!playerDead)
         {
-            currentHealth -= decreaseAmount;
-            damageFlash.TriggerFlash();
-            playerHit = true;
-            StartCoroutine(ApplyHitKnockback());
-
-            if (currentHealth < 0)
+            if (hitTimer <= 0)
             {
-                currentHealth = 0;
-                KillPlayer();
-            }
+                sfxPlayer.PlayAudioClip(sfxPlayer.playerHurt, audioSource);
+                currentHealth -= decreaseAmount;
+                damageFlash.TriggerFlash();
+                playerHit = true;
+                StartCoroutine(ApplyHitKnockback());
 
-            hitTimer = hitCooldown;
+                if (currentHealth < 0)
+                {
+                    currentHealth = 0;
+                    KillPlayer();
+                }
+
+                hitTimer = hitCooldown;
+            }
         }
     }
 
@@ -84,6 +95,15 @@ public class PlayerHealth : MonoBehaviour
         ApplyDeathKnockback();
 
         playerDead = true;
+
+        Invoke("ShowDeathMenu", 0.5f);
+    }
+
+    void ShowDeathMenu()
+    {
+        deathMenu = GameObject.Find("Death Menu");
+        Transform deathMenuChild = deathMenu.transform.GetChild(0);
+        deathMenuChild.gameObject.SetActive(true);
     }
 
     void ApplyDeathKnockback()
